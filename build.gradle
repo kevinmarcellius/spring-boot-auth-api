@@ -2,6 +2,8 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.6'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id "org.sonarqube" version "6.3.1.5724"
+	id 'jacoco'
 }
 
 group = 'com.krets'
@@ -53,6 +55,24 @@ dependencies {
 	testImplementation 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+sonar {
+    properties {
+        property "sonar.projectKey", "kevin-ppl_spring-boot-auth-api"
+        property "sonar.organization", "kevin-ppl"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+    }
+}
+
+jacocoTestReport {
+    dependsOn test // run after tests
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+build.dependsOn jacocoTestReport
 
 tasks.named('test') {
 	useJUnitPlatform()
