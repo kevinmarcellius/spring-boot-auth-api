@@ -1,0 +1,56 @@
+# This workflow runs checks on every push to a branch starting with 'feature/'
+name: Feature Branch CI & SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - 'feat/**' # The '**' is a wildcard
+
+jobs:
+  build-and-analyze:
+    name: Build, Test, and Analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history so SonarCloud can analyze blame information
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache Gradle packages
+        uses: actions/cache@vv4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build, Test, and Analyze with Gradle
+        # The 'sonarqube' task will automatically run the 'build' task, which runs 'test',
+        # which in turn generates the JaCoCo report.
+        # The SonarQube plugin then picks up the JaCoCo report and sends it for analysis.
+        env:
+          # GITHUB_TOKEN is a special secret provided by GitHub Actions. It's used by SonarCloud for PR decoration.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # SONAR_TOKEN is the secret you created in your repository settings.
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew build sonarqube --info
