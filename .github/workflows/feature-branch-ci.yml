@@ -32,7 +32,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
 
       - name: Cache Gradle packages
-        uses: actions/cache@vv4
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
